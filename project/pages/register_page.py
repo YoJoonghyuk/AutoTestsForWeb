@@ -1,5 +1,5 @@
 from pages.base_page import BasePage
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 from utils.logger import logger
 
 class RegisterPage(BasePage):
@@ -19,7 +19,8 @@ class RegisterPage(BasePage):
         self.confirm_password_field = "#ConfirmPassword"
         self.register_button = "input.button-1.register-next-step-button"
         self.success_message = "div.result"
-        self.error_message_container = "div.validation-summary-errors ul li"
+        self.error_message_container = "div.validation-summary-errors"
+        self.error_message ="span.field-validation-error"
 
     def register(self, gender, first_name, last_name, email, password, confirm_password):
         """
@@ -50,20 +51,6 @@ class RegisterPage(BasePage):
             logger.error(f"Ошибка при получении текста сообщения об успехе: {e}")
             raise
 
-    def get_error_message_text(self, field):
-        """
-        Возвращает текст сообщения об ошибке для указанного поля.
-        """
-        try:
-            locator = f"span.field-validation-error[data-valmsg-for='{field}']"
-            if self.page.locator(locator).count() > 0:
-                return self.get_text(locator, f"Error message for {field}")
-            else:
-                return ""
-        except Exception as e:
-            logger.error(f"Ошибка при получении текста сообщения об ошибке для поля '{field}': {e}")
-            raise
-
     def is_success_message_visible(self):
         """
         Проверяет, отображается ли сообщение об успешной регистрации.
@@ -74,12 +61,27 @@ class RegisterPage(BasePage):
             logger.error(f"Ошибка при проверке видимости сообщения об успехе: {e}")
             raise
 
+    def get_error_message_text(self, field):
+        """
+        Возвращает текст сообщения об ошибке для указанного поля.
+        """
+        try:
+            locator = f"span.field-validation-error[data-valmsg-for='{field}']"
+            expect(self.page.locator(locator)).to_be_visible(timeout=5000)
+            if self.page.locator(locator).count() > 0:
+                return self.get_text(locator, f"Error message for {field}")
+            else:
+                return ""
+        except Exception as e:
+            logger.error(f"Ошибка при получении текста сообщения об ошибке для поля '{field}': {e}")
+            raise
+
     def is_error_message_visible(self):
         """
         Проверяет, отображается ли контейнер с общими сообщениями об ошибках.
         """
         try:
-            return self.is_visible("div.validation-summary-errors")
+            return self.is_visible("self.error_message_container")
         except Exception as e:
             logger.error(f"Ошибка при проверке видимости контейнера с сообщениями об ошибках: {e}")
             raise

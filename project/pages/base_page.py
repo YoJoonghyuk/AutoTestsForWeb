@@ -11,6 +11,7 @@ class BasePage:
         self.config = config
         self.base_url = config.get("DEFAULT", "base_url")
         self.screenshot_dir = config.get("DEFAULT", "screenshot_dir")
+        self.actual_screenshot_dir = config.get("DEFAULT", "actual_screenshot_dir") 
 
     def goto(self, path=""):
         """
@@ -40,7 +41,7 @@ class BasePage:
         Заполняет текстовое поле.
         """
         try:
-            logger.info(f"Заполнить '{description or locator}' текстом: {text}")
+            logger.info(f"Заполнен '{description or locator}' текстом: {text}")
             self.page.locator(locator).fill(text)
         except Exception as e:
             logger.error(f"Ошибка при заполнении поля '{description or locator}': {e}")
@@ -74,9 +75,8 @@ class BasePage:
         Делает скриншот страницы и сохраняет его в указанную директорию.
         """
         try:
-            actual_screenshot_dir = self.config.get("DEFAULT", "actual_screenshot_dir")
-            screenshot_path = os.path.join(actual_screenshot_dir, screenshot_name)
-            os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)  
+            screenshot_path = os.path.join(self.actual_screenshot_dir, screenshot_name)
+            os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
 
             logger.info(f"Получен скриншот: {screenshot_path}")
             self.page.screenshot(path=screenshot_path)

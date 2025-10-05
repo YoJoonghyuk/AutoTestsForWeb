@@ -1,71 +1,59 @@
 import os
 from PIL import Image
 import imagehash
-from utils.logger import logger
+import logging
+
 
 class ScreenshotComparer:
     """
-    Класс для сравнения скриншотов.
+    Класс для сравнения скриншотов на основе алгоритма хеширования изображений.
     """
-
-    def __init__(self, screenshot_dir, threshold):
-        """
-        Конструктор класса.
-        :param screenshot_dir: Директория, где хранятся эталонные скриншоты.
-        :param threshold: Порог различий между скриншотами (в процентах).
-        """
+    def __init__(self, screenshot_dir, actual_screenshot_dir, threshold, update_snapshots=False):
         self.screenshot_dir = screenshot_dir
+        self.actual_screenshot_dir = actual_screenshot_dir
         self.threshold = threshold
+        self.update_snapshots = update_snapshots
+        self.logger = logging.getLogger(__name__)
 
     def compare_screenshots(self, screenshot_name):
         """
-        Сравнивает скриншот с эталонным изображением.
-        :param screenshot_name: Имя файла скриншота.
-        :return: True, если скриншоты совпадают, False в противном случае.
+        Сравнивает два скриншота (эталонный и актуальный).
         """
+        expected_screenshot_path = os.path.join(self.screenshot_dir, screenshot_name)
+        actual_screenshot_path = os.path.join(self.actual_screenshot_dir, screenshot_name)
+
         try:
-            # 1. Формируем пути к эталонному и текущему скриншотам
-            expected_screenshot_path = os.path.join(self.screenshot_dir, screenshot_name)
-            actual_screenshot_path = os.path.join(self.screenshot_dir, screenshot_name)
-
-            # 2. Проверяем существование эталонного скриншота
             if not os.path.exists(expected_screenshot_path):
-                logger.warning(f"Expected screenshot not found: {expected_screenshot_path}")
-                return False
+                self.logger.warning(f"Ожидаемый скриншот не найден: {expected_screenshot_path}")
+                if self.update_snapshots:
+                  os.makedirs(os.path.dirname(expected_screenshot_path), exist_ok=True)
+                  actual_image = Image.open(actual_screenshot_path)
+                  actual_image.save(expected_screenshot_path)
+                  self.logger.info(f"Эталонный скриншот создан: {expected_screenshot_path}")
+                  return True
+                else:
+                    return False 
 
-            # 3. Открываем изображения с помощью PIL
             expected_image = Image.open(expected_screenshot_path)
             actual_image = Image.open(actual_screenshot_path)
 
-            # 4. Вычисляем хеши изображений
             expected_hash = imagehash.average_hash(expected_image)
             actual_hash = imagehash.average_hash(actual_image)
 
-            # 5. Вычисляем расстояние Хэмминга между хешами
             hamming_distance = expected_hash - actual_hash
 
-            # 6. Сравниваем расстояние Хэмминга с порогом
+            if self.update_snapshots:
+                actual_image.save(expected_screenshot_path) 
+                self.logger.info(f"Эталонный скриншот обновлен: {expected_screenshot_path}")
+                return True 
+
             if hamming_distance < self.threshold:
-                logger.info(f"Screenshots are similar (Hamming distance: {hamming_distance})")
+                self.logger.info(f"Скриншоты похожи (расстояние Хэмминга: {hamming_distance})")
                 return True
             else:
-                logger.warning(f"Screenshots are different (Hamming distance: {hamming_distance})")
+                self.logger.warning(f"Скриншоты отличаются (расстояние Хэмминга: {hamming_distance})")
                 return False
-
         except Exception as e:
-            logger.error(f"Error comparing screenshots: {e}")
+            self.logger.error(f"Ошибка при сравнении скриншотов: {e}")
             return False
 
-    def generate_hash(self, image_path):
-        """
-        Генерирует хеш изображения.
-        :param image_path: Путь к файлу изображения.
-        :return: Хеш изображения.
-        """
-        try:
-            image = Image.open(image_path)
-            hash = imagehash.average_hash(image)
-            return hash
-        except Exception as e:
-            logger.error(f"Error generating hash: {e}")
-            return None
