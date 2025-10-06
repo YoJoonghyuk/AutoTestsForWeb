@@ -21,7 +21,7 @@ def product_page(page, config):
     return ProductPage(page, config)
 
 
-def test_display_product_page(page, config, home_page, product_page, screenshot_comparer):
+def test_display_product_page(page, config, home_page, product_page, screenshot_comparer, request):
     """ PRODUCT_PAGE_001: Проверка отображения страницы товара."""
     try:
         home_page.goto()
@@ -33,6 +33,7 @@ def test_display_product_page(page, config, home_page, product_page, screenshot_
         assert product_page.get_product_price() == product_info["product_price"]
 
         screenshot_name = "product_page/product_page_display.png"
+        request.node.screenshot_name = screenshot_name
         product_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают" 
 

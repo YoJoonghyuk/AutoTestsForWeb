@@ -17,7 +17,7 @@ def register_page(page, config):
     return RegisterPage(page, config)
 
 
-def test_successful_registration(page, config, home_page, register_page, screenshot_comparer):
+def test_successful_registration(page, config, home_page, register_page, screenshot_comparer, request):
     """TC_REGISTER_001: Успешная регистрация пользователя."""
     try:
         home_page.goto()
@@ -38,6 +38,7 @@ def test_successful_registration(page, config, home_page, register_page, screens
         assert "Your registration completed" in register_page.get_success_message_text()
 
         screenshot_name = "register_page/register_page_success.png"
+        request.node.screenshot_name = screenshot_name
         register_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
@@ -46,7 +47,7 @@ def test_successful_registration(page, config, home_page, register_page, screens
         raise
 
 
-def test_registration_with_existing_email(page, config, home_page, register_page, screenshot_comparer):
+def test_registration_with_existing_email(page, config, home_page, register_page, screenshot_comparer, request):
     """TC_REGISTER_002: Регистрация пользователя с уже существующим email."""
     try:
         home_page.goto()
@@ -68,6 +69,7 @@ def test_registration_with_existing_email(page, config, home_page, register_page
         assert "The specified email already exists" in register_page.get_specific_error_text()
 
         screenshot_name = "register_page/register_page_existing_email.png"
+        request.node.screenshot_name = screenshot_name
         register_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
@@ -76,7 +78,7 @@ def test_registration_with_existing_email(page, config, home_page, register_page
         raise
 
 
-def test_registration_with_invalid_email_format(page, config, home_page, register_page, screenshot_comparer):
+def test_registration_with_invalid_email_format(page, config, home_page, register_page, screenshot_comparer, request):
     """TC_REGISTER_003: Регистрация пользователя с неверным форматом email."""
     try:
         home_page.goto()
@@ -98,6 +100,7 @@ def test_registration_with_invalid_email_format(page, config, home_page, registe
         assert "Wrong email" in register_page.get_error_message_text('Email')
 
         screenshot_name = "register_page/register_page_invalid_email.png"
+        request.node.screenshot_name = screenshot_name
         register_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
@@ -106,7 +109,7 @@ def test_registration_with_invalid_email_format(page, config, home_page, registe
         raise
 
 
-def test_registration_with_empty_required_fields(page, config, home_page, register_page, screenshot_comparer):
+def test_registration_with_empty_required_fields(page, config, home_page, register_page, screenshot_comparer, request):
     """TC_REGISTER_004: Регистрация пользователя с незаполненными обязательными полями."""
     try:
         home_page.goto()
@@ -128,6 +131,7 @@ def test_registration_with_empty_required_fields(page, config, home_page, regist
         assert "Password is required." in register_page.get_error_message_text('ConfirmPassword')
 
         screenshot_name = "register_page/register_page_empty_fields.png"
+        request.node.screenshot_name = screenshot_name
         register_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
@@ -136,7 +140,7 @@ def test_registration_with_empty_required_fields(page, config, home_page, regist
         raise
 
 
-def test_registration_with_mismatched_passwords(page, config, home_page, register_page, screenshot_comparer):
+def test_registration_with_mismatched_passwords(page, config, home_page, register_page, screenshot_comparer, request):
     """TC_REGISTER_005: Регистрация пользователя в случае неуспешного подтверждения пароля."""
     try:
         home_page.goto()
@@ -160,6 +164,7 @@ def test_registration_with_mismatched_passwords(page, config, home_page, registe
             'ConfirmPassword')
 
         screenshot_name = "register_page/register_page_mismatched_passwords.png"
+        request.node.screenshot_name = screenshot_name
         register_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:

@@ -15,36 +15,36 @@ from utils.logger import logger
 
 
 @pytest.fixture
-def home_page(page: Page, config: ConfigParser) -> HomePage:
+def home_page(page, config):
     return HomePage(page, config)
 
 
 @pytest.fixture
-def login_page(page: Page, config: ConfigParser) -> LoginPage:
+def login_page(page, config):
     return LoginPage(page, config)
 
 
 @pytest.fixture
-def cart_page(page: Page, config: ConfigParser) -> CartPage:
+def cart_page(page, config):
     return CartPage(page, config)
 
 
 @pytest.fixture
-def wishlist_page(page: Page, config: ConfigParser) -> WishlistPage:
+def wishlist_page(page, config):
     return WishlistPage(page, config) 
 
 
 @pytest.fixture
-def product_page(page: Page, config: ConfigParser) -> ProductPage: 
+def product_page(page, config): 
     return ProductPage(page, config)
 
 
 @pytest.fixture
-def register_page(page: Page, config: ConfigParser) -> RegisterPage:
+def register_page(page, config):
     return RegisterPage(page, config)
 
 
-def cart_count(page: Page) -> int:
+def cart_count(page):
     try:
         txt = page.locator(".header-links .cart-qty").inner_text(timeout=3000)
         return get_count_from_text(txt)
@@ -53,7 +53,7 @@ def cart_count(page: Page) -> int:
         raise
 
 
-def wishlist_count(page: Page) -> int:
+def wishlist_count(page):
     try:
         txt = page.locator(".header-links .wishlist-qty").inner_text(timeout=3000)
         return get_count_from_text(txt)
@@ -63,7 +63,7 @@ def wishlist_count(page: Page) -> int:
 
 
 @pytest.fixture
-def product_added_to_cart(page: Page, config: ConfigParser, registered_page: tuple) -> Page:
+def product_added_to_cart(page, config, registered_page):
     """Фикстура для добавления товара в корзину.
     Возвращает объект страницы после добавления товара в корзину.
     """
@@ -94,7 +94,7 @@ def product_added_to_cart(page: Page, config: ConfigParser, registered_page: tup
 
 
 @pytest.fixture
-def product_added_to_wishlist(page: Page, config: ConfigParser, registered_page: tuple) -> Page:
+def product_added_to_wishlist(page, config, registered_page):
     """Фикстура для добавления товара в вишлист.
     Возвращает объект страницы после добавления товара в вишлист.
     """
@@ -124,7 +124,7 @@ def product_added_to_wishlist(page: Page, config: ConfigParser, registered_page:
     return page
 
 
-def test_cart_add_from_product_page(product_added_to_cart: Page, cart_page: CartPage, screenshot_comparer):
+def test_cart_add_from_product_page(product_added_to_cart, cart_page, screenshot_comparer, request):
     """TC_CART_001: Добавление товара в корзину со страницы товара."""
     page = product_added_to_cart
 
@@ -132,7 +132,7 @@ def test_cart_add_from_product_page(product_added_to_cart: Page, cart_page: Cart
 
     # Убедимся, что счётчик увеличился
     try:
-        expect(page.locator(".header-links .cart-qty")).not_to_have_text(str(initial), timeout=7000)
+        expect(page.locator(".header-links .cart-qty")).not_to_have_text(str(initial), timeout=5000)
     except PlaywrightTimeoutError:
         logger.warning("Не удалось дождаться обновления счетчика корзины")
     except Exception as e:
@@ -140,6 +140,7 @@ def test_cart_add_from_product_page(product_added_to_cart: Page, cart_page: Cart
         raise
 
     screenshot_name = "cart_page/cart_add_from_product_page.png"
+    request.node.screenshot_name = screenshot_name
     try:
         cart_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
@@ -148,29 +149,21 @@ def test_cart_add_from_product_page(product_added_to_cart: Page, cart_page: Cart
         raise
 
 
-def test_cart_add_from_category(page: Page, config: ConfigParser,  home_page: HomePage,
-                                                 cart_page: CartPage, screenshot_comparer, registered_page):
+def test_cart_add_from_category(page, config,  home_page, cart_page, screenshot_comparer, registered_page, request):
     """TC_CART_002: Добавление товара в корзину со страницы категории."""
     email, password, page = registered_page
-
-    # Переходим на страницу, где есть грид товаров (например, Computers или любой, где есть нужный товар)
-    # Для универсальности сначала перейдём на главную, затем найдём продукт по названию в grid
     try:
         page.goto(config.get("DEFAULT", "base_url"))
         home_page.click_category(category["product_category"])
-        # Название продукта, которое скорее всего есть в гриде (при необходимости поменять)
         product_name = product_info["product_name"]
         tile = page.locator("div.product-item", has_text=product_name).first
 
-        # assert tile.count() != 0 or tile.is_visible(), "Продукт не найден в product grid"
 
         initial = cart_count(page)
-        # Найдём кнопку add-to-cart внутри этого product-item
         add_btn = tile.locator(
             "input.product-box-add-to-cart-button, input.button-2.product-box-add-to-cart-button, input.button-2.add-to-cart-button").first
         add_btn.click()
 
-        # Ждём уведомления
         expect(page.locator("#bar-notification")).to_be_visible(timeout=7000)
         expect(page.locator("#bar-notification")).to_contain_text("added to your shopping cart", timeout=7000)
 
@@ -187,6 +180,7 @@ def test_cart_add_from_category(page: Page, config: ConfigParser,  home_page: Ho
         raise
 
     screenshot_name = "cart_page/cart_add_from_category_page.png"
+    request.node.screenshot_name = screenshot_name
     try:
         cart_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
@@ -194,7 +188,7 @@ def test_cart_add_from_category(page: Page, config: ConfigParser,  home_page: Ho
         logger.error(f"Ошибка при сравнении скриншотов: {e}")
         raise
 
-def test_cart_remove_item(product_added_to_cart: Page, config: ConfigParser, cart_page: CartPage, screenshot_comparer):
+def test_cart_remove_item(product_added_to_cart, config, cart_page, screenshot_comparer, request):
     """TC_CART_003: Удаление товара из корзины."""
     page = product_added_to_cart
 
@@ -215,6 +209,7 @@ def test_cart_remove_item(product_added_to_cart: Page, config: ConfigParser, car
         raise
 
     screenshot_name = "cart_page/cart_remove_item.png"
+    request.node.screenshot_name = screenshot_name
     try:
         cart_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
@@ -223,8 +218,7 @@ def test_cart_remove_item(product_added_to_cart: Page, config: ConfigParser, car
         raise
 
 
-def test_wishlist_add_from_product_page(product_added_to_wishlist: Page, wishlist_page: WishlistPage,
-                                          screenshot_comparer):
+def test_wishlist_add_from_product_page(product_added_to_wishlist, wishlist_page, screenshot_comparer, request):
     """TC_WISHLIST_001: Добавление товара в список желаний со страницы товара."""
     page = product_added_to_wishlist
 
@@ -240,6 +234,7 @@ def test_wishlist_add_from_product_page(product_added_to_wishlist: Page, wishlis
         raise
 
     screenshot_name = "wishlist_page/wishlist_add_from_product_page.png"
+    request.node.screenshot_name = screenshot_name
     try:
         wishlist_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
@@ -248,8 +243,7 @@ def test_wishlist_add_from_product_page(product_added_to_wishlist: Page, wishlis
         raise
 
 
-def test_wishlist_add_to_cart_from_wishlist(page: Page, config: ConfigParser, registered_page: tuple,
-                                            wishlist_page: WishlistPage, screenshot_comparer):
+def test_wishlist_add_to_cart_from_wishlist(page, config, registered_page, wishlist_page, screenshot_comparer, request):
     """TC_WISHLIST_002: Добавление товара в корзину со страницы списка желаний."""
     email, password, page = registered_page
 
@@ -283,6 +277,7 @@ def test_wishlist_add_to_cart_from_wishlist(page: Page, config: ConfigParser, re
         logger.error(f"Ошибка в процессе добавления товара в корзину из списка желаний: {e}")
         raise
     screenshot_name = "wishlist_page/add_to_cart_from_wishlist.png"
+    request.node.screenshot_name = screenshot_name
     try:
         wishlist_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
@@ -291,8 +286,7 @@ def test_wishlist_add_to_cart_from_wishlist(page: Page, config: ConfigParser, re
         raise
 
 
-def test_wishlist_remove_item(page: Page, config: ConfigParser, registered_page: tuple, wishlist_page: WishlistPage,
-                              screenshot_comparer):
+def test_wishlist_remove_item(page, config, registered_page, wishlist_page, screenshot_comparer, request):
     """TC_WISHLIST_003: Удаление товара из списка желаний."""
     email, password, page = registered_page
 
@@ -320,6 +314,7 @@ def test_wishlist_remove_item(page: Page, config: ConfigParser, registered_page:
         raise
 
     screenshot_name = "wishlist_page/wishlist_remove_item.png"
+    request.node.screenshot_name = screenshot_name
     try:
         wishlist_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"

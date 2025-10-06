@@ -16,7 +16,7 @@ def category_page(page, config):
     return CategoryPage(page, config)
 
 
-def test_display_list_of_products_in_category(page, config, home_page, category_page, screenshot_comparer):
+def test_display_list_of_products_in_category(page, config, home_page, category_page, screenshot_comparer, request):
     """TC_CATEGORY_001: Отображение списка товаров в категории"""
     try:
         home_page.goto()
@@ -29,6 +29,7 @@ def test_display_list_of_products_in_category(page, config, home_page, category_
         raise
 
     screenshot_name = "category_page/category_page_products_list.png"
+    request.node.screenshot_name = screenshot_name
     try:
         category_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"

@@ -15,44 +15,42 @@ from data.address import new_address
 
 
 @pytest.fixture
-def home_page(page: Page, config: ConfigParser):
+def home_page(page, config):
     return HomePage(page, config)
 
 
 @pytest.fixture
-def login_page(page: Page, config: ConfigParser):
+def login_page(page, config):
     return LoginPage(page, config)
 
 
 @pytest.fixture
-def my_account_page(page: Page, config: ConfigParser):
+def my_account_page(page, config):
     return MyAccountPage(page, config)
 
 
 @pytest.fixture
-def change_password_page(page: Page, config: ConfigParser):
+def change_password_page(page, config):
     return ChangePasswordPage(page, config)
 
 
 @pytest.fixture
-def addresses_page(page: Page, config: ConfigParser):
+def addresses_page(page, config):
     return AddressesPage(page, config)
 
 
 @pytest.fixture
-def add_address_page(page: Page, config: ConfigParser):
+def add_address_page(page, config):
     return AddAddressPage(page, config)
 
 
 @pytest.fixture
-def register_page(page: Page, config: ConfigParser):
+def register_page(page, config):
     return RegisterPage(page, config)
 
 
 @pytest.fixture
-def filled_address_form(page: Page, config: ConfigParser, registered_page: tuple[str, str, Page],
-                        my_account_page: MyAccountPage, addresses_page: AddressesPage,
-                        add_address_page: AddAddressPage) -> tuple[Page, str]:
+def filled_address_form(page, config, registered_page, my_account_page, addresses_page, add_address_page):
     """
     Фикстура для заполнения полей адреса 
     """
@@ -64,7 +62,7 @@ def filled_address_form(page: Page, config: ConfigParser, registered_page: tuple
         expect(my_account_page.page.locator(my_account_page.addresses_link)).to_be_visible(timeout=5000)
         my_account_page.goto_addresses()
         expect(addresses_page.page.locator(addresses_page.add_new_address_button)).to_be_visible(
-            timeout=5000)  # Ожидание
+            timeout=5000)  
         addresses_page.goto_add_new_address()
 
         first_name = generate_random_string(8)
@@ -92,9 +90,7 @@ def filled_address_form(page: Page, config: ConfigParser, registered_page: tuple
         raise
 
 
-def test_edit_profile_information_success(page: Page, config: ConfigParser, logged_in_page: Page,
-                                         home_page: HomePage, my_account_page: MyAccountPage,
-                                         screenshot_comparer):
+def test_edit_profile_information_success(page, config, logged_in_page, home_page, my_account_page, screenshot_comparer, request):
     """TC_PROFILE_001: Проверка успешного изменения информации профиля."""
     try:
         page = logged_in_page
@@ -111,15 +107,14 @@ def test_edit_profile_information_success(page: Page, config: ConfigParser, logg
                                                     expected_last_name=new_last_name)
 
         screenshot_name = "profile_management/edit_profile_success.png"
+        request.node.screenshot_name = screenshot_name
         my_account_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
         logger.error(f"Ошибка при изменении информации профиля: {e}")
         raise
 
-def test_edit_profile_information_empty_fields(page: Page, config: ConfigParser, logged_in_page: Page,
-                                                home_page: HomePage, my_account_page: MyAccountPage,
-                                                screenshot_comparer):
+def test_edit_profile_information_empty_fields(page, config, logged_in_page, home_page, my_account_page, screenshot_comparer, request):
     """TC_PROFILE_002: Проверка ошибки при изменении информации профиля с пустыми полями."""
     try:
         page = logged_in_page
@@ -136,6 +131,7 @@ def test_edit_profile_information_empty_fields(page: Page, config: ConfigParser,
         expect(page.locator("span[data-valmsg-for='Email']")).to_be_visible()
 
         screenshot_name = "profile_management/edit_profile_empty.png"
+        request.node.screenshot_name = screenshot_name
         my_account_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -143,9 +139,7 @@ def test_edit_profile_information_empty_fields(page: Page, config: ConfigParser,
         raise
 
 
-def test_edit_profile_information_invalid_email(page: Page, config: ConfigParser, logged_in_page: Page,
-                                                  home_page: HomePage, my_account_page: MyAccountPage,
-                                                  screenshot_comparer):
+def test_edit_profile_information_invalid_email(page, config, logged_in_page, home_page, my_account_page, screenshot_comparer, request):
     """TC_PROFILE_003: Проверка изменения информации профиля с некорректным email."""
     try:
         page = logged_in_page
@@ -156,6 +150,7 @@ def test_edit_profile_information_invalid_email(page: Page, config: ConfigParser
         expect(page.locator("span[data-valmsg-for='Email']")).to_be_visible()
 
         screenshot_name = "profile_management/edit_invalid_email.png"
+        request.node.screenshot_name = screenshot_name
         my_account_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -164,13 +159,14 @@ def test_edit_profile_information_invalid_email(page: Page, config: ConfigParser
 
 
 def test_add_new_address(page, config, registered_page, addresses_page,
-                       filled_address_form, screenshot_comparer):
+                       filled_address_form, screenshot_comparer, request):
     """TC_ADDRESS_001: Проверка добавления нового адреса."""
     try:
         email, password, page = registered_page
         page, email = filled_address_form
 
         screenshot_name = "profile_management/add_new_address.png"
+        request.node.screenshot_name = screenshot_name
         addresses_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -179,7 +175,7 @@ def test_add_new_address(page, config, registered_page, addresses_page,
 
 
 def test_edit_existing_address(page, config, registered_page, home_page, my_account_page, addresses_page,
-                              add_address_page, screenshot_comparer, filled_address_form):
+                              add_address_page, screenshot_comparer, filled_address_form, request):
     """TC_ADDRESS_002: Проверка редактирования существующего адреса."""
     try:
         email, password, page = registered_page
@@ -201,6 +197,7 @@ def test_edit_existing_address(page, config, registered_page, home_page, my_acco
         add_address_page.verify_address_displayed(new_city)
 
         screenshot_name = "profile_management/edit_existing_address.png"
+        request.node.screenshot_name = screenshot_name
         addresses_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -208,7 +205,7 @@ def test_edit_existing_address(page, config, registered_page, home_page, my_acco
         raise
 
 
-def test_delete_existing_address(page, config, registered_page, addresses_page, screenshot_comparer, filled_address_form):
+def test_delete_existing_address(page, config, registered_page, addresses_page, screenshot_comparer, filled_address_form, request):
     """TC_ADDRESS_003: Проверка удаления существующего адреса."""
     try:
         email, password, page = registered_page
@@ -219,6 +216,7 @@ def test_delete_existing_address(page, config, registered_page, addresses_page, 
         expect(page.locator("div.address-list")).not_to_be_empty()
 
         screenshot_name = "profile_management/delete_existing_address.png"
+        request.node.screenshot_name = screenshot_name
         addresses_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -227,7 +225,7 @@ def test_delete_existing_address(page, config, registered_page, addresses_page, 
 
 
 def test_change_password_success(page, config, logged_in_page, home_page, my_account_page, screenshot_comparer,
-                                change_password_page):
+                                change_password_page, request):
     """TC_PASSWORD_001: Проверка успешного изменения пароля."""
     try:
         page = logged_in_page
@@ -242,6 +240,7 @@ def test_change_password_success(page, config, logged_in_page, home_page, my_acc
         change_password_page.verify_success_message()
 
         screenshot_name = "profile_management/change_password.png"
+        request.node.screenshot_name = screenshot_name
         my_account_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -249,8 +248,7 @@ def test_change_password_success(page, config, logged_in_page, home_page, my_acc
         raise
 
 
-def test_change_password_invalid_old_password(page, config, logged_in_page, home_page, my_account_page,
-                                               screenshot_comparer, change_password_page):
+def test_change_password_invalid_old_password(page, config, logged_in_page, home_page, my_account_page, screenshot_comparer, change_password_page, request):
     """TC_PASSWORD_002: Проверка ошибки при изменении пароля с неверным старым паролем."""
     try:
         page = logged_in_page
@@ -263,14 +261,14 @@ def test_change_password_invalid_old_password(page, config, logged_in_page, home
         change_password_page.verify_old_password_error()
 
         screenshot_name = "profile_management/change_password_invalid.png"
+        request.node.screenshot_name = screenshot_name
         my_account_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
         logger.error(f"Ошибка при попытке изменить пароль с неверным старым паролем: {e}")
         raise
 
-def test_change_password_mismatched_new_password(page, config, logged_in_page, home_page, my_account_page,
-                                                   screenshot_comparer, change_password_page):
+def test_change_password_mismatched_new_password(page, config, logged_in_page, home_page, my_account_page, screenshot_comparer, change_password_page, request):
     """TC_PASSWORD_003: Проверка ошибки при изменении пароля в случае неуспешного подтверждения."""
     try:
         page = logged_in_page
@@ -282,6 +280,7 @@ def test_change_password_mismatched_new_password(page, config, logged_in_page, h
         change_password_page.verify_new_password_mismatch_error()
 
         screenshot_name = "profile_management/change_password_mismatched.png"
+        request.node.screenshot_name = screenshot_name
         my_account_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:

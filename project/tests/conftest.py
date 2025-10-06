@@ -24,27 +24,33 @@ def pytest_runtest_makereport(item, call):
     extra = getattr(report, "extras", [])
 
     if report.when == "call" or report.when == "setup":
-        xfail = hasattr(report, "wasxfail")
-        if (report.skipped and xfail) or (report.failed and not xfail):
-            config = item.funcargs['config']  
+        if report.failed:
+            config = item.funcargs['config']
             actual_screenshot_dir = config.get("DEFAULT", "actual_screenshot_dir")
-            file_name = report.nodeid.replace("::", "_") + ".png"
-            screenshot_path = os.path.join(actual_screenshot_dir, file_name)
 
-            if os.path.exists(screenshot_path):
-                logger.info(f"Найден скриншот для отчета: {screenshot_path}")
-                try:
-                    with open(screenshot_path, "rb") as image_file:
-                        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+            # Получаем имя файла скриншота из атрибута item 
+            screenshot_name = getattr(item, "screenshot_name", None)
 
-                    extra.append(pytest_html.extras.html(
-                        f'<div><img src="data:image/png;base64,{encoded_string}" alt="screenshot" style="width:300px;height:200px;" onclick="window.open(this.src)" align="right"/></div>'
-                    ))
-                except Exception as e:
-                    logger.error(f"Ошибка при чтении файла скриншота: {e}")
+            if screenshot_name:
+                screenshot_path = os.path.join(actual_screenshot_dir, screenshot_name)
+
+                if os.path.exists(screenshot_path):
+                    try:
+                        with open(screenshot_path, "rb") as image_file:
+                            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+
+                        extra.append(pytest_html.extras.html(
+                            f'<div><img src="data:image/png;base64,{encoded_string}" alt="screenshot" style="width:300px;height:200px;" onclick="window.open(this.src)" align="right"/></div>'
+                        ))
+                    except Exception as e:
+                        logger.error(f"Ошибка при чтении файла скриншота: {e}")
+                else:
+                    logger.warning(f"Скриншот не найден: {screenshot_path}")
             else:
-                logger.warning(f"Скриншот не найден: {screenshot_path}")
+                logger.warning("Имя скриншота не задано в тесте.")
+
         report.extras = extra
+
 
 
 def pytest_html_results_table_header(cells):

@@ -16,7 +16,7 @@ def search_results_page(page, config):
     return SearchResultsPage(page, config)
 
 
-def test_search_existing_product(page, config, home_page, search_results_page, screenshot_comparer):
+def test_search_existing_product(page, config, home_page, search_results_page, screenshot_comparer, request):
     """TC_SEARCH_001: Проверка поиска существующего товара."""
     try:
         search_term = search_terms["existing_product"]
@@ -27,6 +27,7 @@ def test_search_existing_product(page, config, home_page, search_results_page, s
         assert search_results_page.has_results()
 
         screenshot_name = "search_page/search_existing_product.png"
+        request.node.screenshot_name = screenshot_name
         search_results_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -34,7 +35,7 @@ def test_search_existing_product(page, config, home_page, search_results_page, s
         raise
 
 
-def test_search_nonexistent_product(page, config, home_page, search_results_page, screenshot_comparer):
+def test_search_nonexistent_product(page, config, home_page, search_results_page, screenshot_comparer, request):
     """TC_SEARCH_002: Проверка поиска несуществующего товара."""
     try:
         search_term = search_terms["nonexistent_product"]
@@ -45,6 +46,7 @@ def test_search_nonexistent_product(page, config, home_page, search_results_page
         assert search_results_page.get_no_results_message() == "No products were found that matched your criteria."
 
         screenshot_name = "search_page/search_nonexistent_product.png"
+        request.node.screenshot_name = screenshot_name
         search_results_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -52,7 +54,7 @@ def test_search_nonexistent_product(page, config, home_page, search_results_page
         raise
 
 
-def test_search_empty_query(page, config, home_page, search_results_page, screenshot_comparer):
+def test_search_empty_query(page, config, home_page, search_results_page, screenshot_comparer, request):
     """TC_SEARCH_003:  Проверка поиска с пустым запросом."""
     try:
         home_page.goto()
@@ -62,6 +64,7 @@ def test_search_empty_query(page, config, home_page, search_results_page, screen
         expect(search_results_page.page.locator(search_results_page.search_results)).to_be_visible(timeout=5000)
         
         screenshot_name = "search_page/search_empty_query.png"
+        request.node.screenshot_name = screenshot_name
         search_results_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:

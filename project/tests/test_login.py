@@ -15,7 +15,7 @@ def login_page(page, config):
     return LoginPage(page, config)
 
 
-def test_successful_login(page, config, home_page, login_page, screenshot_comparer):
+def test_successful_login(page, config, home_page, login_page, screenshot_comparer, request):
     """ LOGIN_001: Успешный логин"""
     try:
         home_page.goto()
@@ -26,6 +26,7 @@ def test_successful_login(page, config, home_page, login_page, screenshot_compar
         assert home_page.is_logged_in(), "Ошибка входа"
 
         screenshot_name = "login_page/login_page_success.png"
+        request.node.screenshot_name = screenshot_name
         home_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -33,7 +34,7 @@ def test_successful_login(page, config, home_page, login_page, screenshot_compar
         raise
 
 
-def test_login_with_incorrect_password(page, config, home_page, login_page, screenshot_comparer):
+def test_login_with_incorrect_password(page, config, home_page, login_page, screenshot_comparer, request):
     """ LOGIN_002: Логин с некорректным паролем"""
     try:
         home_page.goto()
@@ -44,6 +45,7 @@ def test_login_with_incorrect_password(page, config, home_page, login_page, scre
         assert "Login was unsuccessful" in login_page.get_error_message_text(), "Сообщение об ошибке не найдено"
         
         screenshot_name = "login_page/login_page_incorrect_password.png"
+        request.node.screenshot_name = screenshot_name
         home_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
@@ -52,7 +54,7 @@ def test_login_with_incorrect_password(page, config, home_page, login_page, scre
         raise
 
 
-def test_login_with_empty_fields(page, config, home_page, login_page, screenshot_comparer):
+def test_login_with_empty_fields(page, config, home_page, login_page, screenshot_comparer, request):
     """ LOGIN_003:Логин с пустыми полями"""
     try:
         home_page.goto()
@@ -62,6 +64,7 @@ def test_login_with_empty_fields(page, config, home_page, login_page, screenshot
         assert login_page.is_error_message_visible(), "Сообщение об ошибке не найдено"
 
         screenshot_name = "login_page/login_page_empty_fields.png"
+        request.node.screenshot_name = screenshot_name
 
         home_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
@@ -70,7 +73,7 @@ def test_login_with_empty_fields(page, config, home_page, login_page, screenshot
         raise
 
 
-def test_login_with_nonexistent_email(page, config, home_page, login_page, screenshot_comparer):
+def test_login_with_nonexistent_email(page, config, home_page, login_page, screenshot_comparer, request):
     """ LOGIN_004: Логин с несуществующим email"""
     try:
         home_page.goto()
@@ -81,6 +84,7 @@ def test_login_with_nonexistent_email(page, config, home_page, login_page, scree
         assert "Login was unsuccessful" in login_page.get_error_message_text(), "Сообщение об ошибке не найдено"
 
         screenshot_name = "login_page/login_page_nonexistent_email.png"
+        request.node.screenshot_name = screenshot_name
         home_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:
@@ -89,7 +93,7 @@ def test_login_with_nonexistent_email(page, config, home_page, login_page, scree
 
 
 
-def test_logout(page, config, home_page, screenshot_comparer):
+def test_logout(page, config, home_page, screenshot_comparer, request):
     """ LOGIN_005: Выход из системы"""
     try:
         home_page.goto()
@@ -103,6 +107,7 @@ def test_logout(page, config, home_page, screenshot_comparer):
         assert not home_page.is_logged_in(), "Ошибка выхода"
 
         screenshot_name = "login_page/logout_page_success.png"
+        request.node.screenshot_name = screenshot_name
 
         home_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"

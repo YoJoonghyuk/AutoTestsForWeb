@@ -83,7 +83,7 @@ def fill_checkout_address_form(page, checkout_page):
 
 
 def test_successful_checkout_with_new_address(page, config, home_page, cart_page, checkout_page, product_page,
-                                               registered_page, screenshot_comparer, fill_checkout_address_form):
+                                               registered_page, screenshot_comparer, fill_checkout_address_form, request):
     """ TC_CHECKOUT_001: Проверка успешного оформления заказа с новым адресом."""
     try:
         email, password, page = registered_page
@@ -112,6 +112,7 @@ def test_successful_checkout_with_new_address(page, config, home_page, cart_page
         expect(page.locator("div.section.order-completed")).to_be_visible(timeout=10000)
 
         screenshot_name = "checkout/successful_checkout.png"
+        request.node.screenshot_name = screenshot_name
         checkout_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
@@ -121,7 +122,7 @@ def test_successful_checkout_with_new_address(page, config, home_page, cart_page
 
 
 def test_orders_in_profile(page, config, home_page, cart_page, checkout_page, product_page,
-                           orders_page, registered_page, screenshot_comparer, fill_checkout_address_form):
+                           orders_page, registered_page, screenshot_comparer, fill_checkout_address_form, request):
     """ TC_CHECKOUT_001: Проверка отображения заказов в профиле пользователя после оформления заказа. """
     try:
         email, password, page = registered_page
@@ -156,6 +157,7 @@ def test_orders_in_profile(page, config, home_page, cart_page, checkout_page, pr
         orders_page.has_orders()
 
         screenshot_name = "checkout/successful_order_page.png"
+        request.node.screenshot_name = screenshot_name
         orders_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
 
