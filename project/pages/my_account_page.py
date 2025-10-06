@@ -13,6 +13,7 @@ class MyAccountPage(BasePage):
         self.change_password_link = "a[href='/customer/changepassword']"
         self.orders_link = "a[href='/customer/orders']"
         self.addresses_link = "div.block.block-account-navigation a[href='/customer/addresses']"
+        self.addresses_list = "div.address-list"
         self.save_button = "input[value=Save]"
         self.first_name_field = "#FirstName"
         self.last_name_field = "#LastName"

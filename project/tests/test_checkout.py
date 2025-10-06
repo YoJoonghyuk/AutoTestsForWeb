@@ -109,7 +109,7 @@ def test_successful_checkout_with_new_address(page, config, home_page, cart_page
 
         checkout_page.click_confirm_order()
 
-        expect(page.locator("div.section.order-completed")).to_be_visible(timeout=10000)
+        assert "Your order has been successfully processed!" in checkout_page.get_order_success_message()
 
         screenshot_name = "checkout/successful_checkout.png"
         request.node.screenshot_name = screenshot_name
@@ -148,12 +148,12 @@ def test_orders_in_profile(page, config, home_page, cart_page, checkout_page, pr
 
         checkout_page.click_confirm_order()
     
-        expect(page.locator("div.section.order-completed")).to_be_visible(timeout=10000)
+        assert "Your order has been successfully processed!" in checkout_page.get_order_success_message()
 
         home_page.goto_account_page(email)
         orders_page.goto_orders()
 
-        expect(page.locator("div.order-list")).to_be_visible(timeout=5000)
+        expect(page.locator(orders_page.order_list)).to_be_visible(timeout=5000)
         orders_page.has_orders()
 
         screenshot_name = "checkout/successful_order_page.png"

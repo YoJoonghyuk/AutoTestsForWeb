@@ -12,6 +12,8 @@ class CategoryPage(BasePage):
         self.config = config
         self.product_grid = "div.product-grid"
         self.product_items = "div.item-box"
+        self.success_notification ="#bar-notification"
+        self.add_to_cart = "input.button-2.product-box-add-to-cart-button"
 
     def get_product_count(self):
         """

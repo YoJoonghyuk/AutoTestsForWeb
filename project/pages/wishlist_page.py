@@ -13,6 +13,7 @@ class WishlistPage(BasePage):
         self.wishlist_content = "div.wishlist-content"
         self.wishlist_table = "table.cart"
         self.add_to_cart_checkbox = "input[name='addtocart']"
+        self.counter = ".header-links .wishlist-qty"
 
     def remove_from_wishlist(self, index=1):
         """

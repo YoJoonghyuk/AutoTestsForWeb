@@ -165,6 +165,7 @@ def test_registration_with_mismatched_passwords(page, config, home_page, registe
 
         screenshot_name = "register_page/register_page_mismatched_passwords.png"
         request.node.screenshot_name = screenshot_name
+        
         register_page.take_screenshot(screenshot_name)
         assert screenshot_comparer.compare_screenshots(screenshot_name), "Скриншоты не совпадают"
     except Exception as e:

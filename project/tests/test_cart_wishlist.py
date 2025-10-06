@@ -9,8 +9,8 @@ from pages.cart_page import CartPage
 from pages.product_page import ProductPage
 from pages.wishlist_page import WishlistPage
 from pages.register_page import RegisterPage
+from pages.category_page import CategoryPage
 from data.product_data import product_info, category
-from configparser import ConfigParser
 from utils.logger import logger
 
 
@@ -43,19 +43,23 @@ def product_page(page, config):
 def register_page(page, config):
     return RegisterPage(page, config)
 
+@pytest.fixture
+def category_page(page, config):
+    return CategoryPage(page, config)
 
-def cart_count(page):
+
+def cart_count(page, cart_page):
     try:
-        txt = page.locator(".header-links .cart-qty").inner_text(timeout=3000)
+        txt = page.locator(cart_page.counter).inner_text(timeout=3000)
         return get_count_from_text(txt)
     except Exception as e:
         logger.error(f"Ошибка при получении количества товаров в корзине: {e}")
         raise
 
 
-def wishlist_count(page):
+def wishlist_count(page, wishlist_page):
     try:
-        txt = page.locator(".header-links .wishlist-qty").inner_text(timeout=3000)
+        txt = page.locator(wishlist_page.counter).inner_text(timeout=3000)
         return get_count_from_text(txt)
     except Exception as e:
         logger.error(f"Ошибка при получении количества товаров в списке желаний: {e}")
@@ -63,7 +67,7 @@ def wishlist_count(page):
 
 
 @pytest.fixture
-def product_added_to_cart(page, config, registered_page):
+def product_added_to_cart(page, config, cart_page, registered_page):
     """Фикстура для добавления товара в корзину.
     Возвращает объект страницы после добавления товара в корзину.
     """
@@ -74,7 +78,7 @@ def product_added_to_cart(page, config, registered_page):
 
     # Убедимся, что счетчик корзины равен 0
     try:
-        expect(page.locator(".header-links .cart-qty")).to_have_text("(0)", timeout=5000)
+        expect(page.locator(cart_page.counter)).to_have_text("(0)", timeout=5000)
     except Exception as e:
         logger.error(f"Ошибка при проверке количества товаров в корзине: {e}")
         raise
@@ -94,7 +98,7 @@ def product_added_to_cart(page, config, registered_page):
 
 
 @pytest.fixture
-def product_added_to_wishlist(page, config, registered_page):
+def product_added_to_wishlist(page, config, registered_page, wishlist_page):
     """Фикстура для добавления товара в вишлист.
     Возвращает объект страницы после добавления товара в вишлист.
     """
@@ -105,7 +109,7 @@ def product_added_to_wishlist(page, config, registered_page):
 
     # Убедимся, что счетчик вишлиста равен 0
     try:
-        expect(page.locator(".header-links .wishlist-qty")).to_have_text("(0)", timeout=5000)
+        expect(page.locator(wishlist_page.counter)).to_have_text("(0)", timeout=5000)
     except Exception as e:
         logger.error(f"Ошибка при проверке количества товаров в списке желаний: {e}")
         raise
@@ -128,11 +132,11 @@ def test_cart_add_from_product_page(product_added_to_cart, cart_page, screenshot
     """TC_CART_001: Добавление товара в корзину со страницы товара."""
     page = product_added_to_cart
 
-    initial = cart_count(page)
+    initial = cart_count(page, cart_page)
 
     # Убедимся, что счётчик увеличился
     try:
-        expect(page.locator(".header-links .cart-qty")).not_to_have_text(str(initial), timeout=5000)
+        expect(page.locator(cart_page.counter)).not_to_have_text(str(initial), timeout=5000)
     except PlaywrightTimeoutError:
         logger.warning("Не удалось дождаться обновления счетчика корзины")
     except Exception as e:
@@ -149,27 +153,22 @@ def test_cart_add_from_product_page(product_added_to_cart, cart_page, screenshot
         raise
 
 
-def test_cart_add_from_category(page, config,  home_page, cart_page, screenshot_comparer, registered_page, request):
+def test_cart_add_from_category(page, config,  home_page, cart_page, category_page, screenshot_comparer, registered_page, request):
     """TC_CART_002: Добавление товара в корзину со страницы категории."""
     email, password, page = registered_page
     try:
         page.goto(config.get("DEFAULT", "base_url"))
         home_page.click_category(category["product_category"])
-        product_name = product_info["product_name"]
-        tile = page.locator("div.product-item", has_text=product_name).first
 
+        initial = cart_count(page, cart_page)
+        page.click(category_page.add_to_cart)
 
-        initial = cart_count(page)
-        add_btn = tile.locator(
-            "input.product-box-add-to-cart-button, input.button-2.product-box-add-to-cart-button, input.button-2.add-to-cart-button").first
-        add_btn.click()
-
-        expect(page.locator("#bar-notification")).to_be_visible(timeout=7000)
-        expect(page.locator("#bar-notification")).to_contain_text("added to your shopping cart", timeout=7000)
+        expect(page.locator(category_page.success_notification)).to_be_visible(timeout=7000)
+        expect(page.locator(category_page.success_notification)).to_contain_text("added to your shopping cart", timeout=7000)
 
         # Убедимся, что счётчик увеличился
         try:
-            expect(page.locator(".header-links .cart-qty")).not_to_have_text(str(initial), timeout=7000)
+            expect(page.locator(cart_page.counter)).not_to_have_text(str(initial), timeout=7000)
         except PlaywrightTimeoutError:
             logger.warning("Не удалось дождаться обновления счетчика корзины")
         except Exception as e:
@@ -195,7 +194,7 @@ def test_cart_remove_item(product_added_to_cart, config, cart_page, screenshot_c
     try:
         page.goto(config.get("DEFAULT", "base_url") + "/cart")
         # Найдём все строки корзины
-        rows = page.locator("table.cart tbody tr.cart-item-row")
+        rows = page.locator(cart_page.cart_table_row)
         initial_rows = rows.count()
         assert initial_rows > 0, "В корзине нет товаров для удаления"
 
@@ -203,7 +202,7 @@ def test_cart_remove_item(product_added_to_cart, config, cart_page, screenshot_c
         cart_page.update_cart()
 
         # Ждём, пока количество строк уменьшится
-        expect(page.locator("table.cart tbody tr.cart-item-row")).to_have_count(initial_rows - 1, timeout=7000)
+        expect(page.locator(cart_page.cart_table_row)).to_have_count(initial_rows - 1, timeout=7000)
     except Exception as e:
         logger.error(f"Ошибка при удалении товара из корзины: {e}")
         raise
@@ -222,11 +221,11 @@ def test_wishlist_add_from_product_page(product_added_to_wishlist, wishlist_page
     """TC_WISHLIST_001: Добавление товара в список желаний со страницы товара."""
     page = product_added_to_wishlist
 
-    initial = wishlist_count(page)
+    initial = wishlist_count(page, wishlist_page)
 
     # Ждём обновления счётчика в шапке
     try:
-        expect(page.locator(".header-links .wishlist-qty")).not_to_have_text(str(initial), timeout=7000)
+        expect(page.locator(wishlist_page.counter)).not_to_have_text(str(initial), timeout=7000)
     except PlaywrightTimeoutError:
         logger.warning("Не удалось дождаться обновления счетчика wishlist")
     except Exception as e:
@@ -243,7 +242,7 @@ def test_wishlist_add_from_product_page(product_added_to_wishlist, wishlist_page
         raise
 
 
-def test_wishlist_add_to_cart_from_wishlist(page, config, registered_page, wishlist_page, screenshot_comparer, request):
+def test_wishlist_add_to_cart_from_wishlist(page, config, registered_page, wishlist_page, cart_page, screenshot_comparer, request):
     """TC_WISHLIST_002: Добавление товара в корзину со страницы списка желаний."""
     email, password, page = registered_page
 
@@ -257,9 +256,9 @@ def test_wishlist_add_to_cart_from_wishlist(page, config, registered_page, wishl
             "The product has been added to your wishlist", timeout=7000)
 
         page.goto(config.get("DEFAULT", "base_url") + "/wishlist")
-        initial_cart = cart_count(page)
+        initial_cart = cart_count(page, cart_page)
 
-        rows = page.locator("table.cart tbody tr.cart-item-row")
+        rows = page.locator(cart_page.cart_table_row)
         assert rows.count() > 0, "В вишлисте нет товаров для перевода в корзину"
 
         wishlist_page.add_to_cart_from_wishlist()
@@ -267,7 +266,7 @@ def test_wishlist_add_to_cart_from_wishlist(page, config, registered_page, wishl
         expect(page).to_have_url(re.compile(r".*/cart"), timeout=7000)
 
         try:
-            expect(page.locator(".header-links .cart-qty")).not_to_have_text(str(initial_cart), timeout=7000)
+            expect(page.locator(cart_page.counter)).not_to_have_text(str(initial_cart), timeout=7000)
         except PlaywrightTimeoutError:
             logger.warning("Не удалось дождаться обновления счетчика корзины")
         except Exception as e:
@@ -286,7 +285,7 @@ def test_wishlist_add_to_cart_from_wishlist(page, config, registered_page, wishl
         raise
 
 
-def test_wishlist_remove_item(page, config, registered_page, wishlist_page, screenshot_comparer, request):
+def test_wishlist_remove_item(page, config, registered_page, wishlist_page, screenshot_comparer, cart_page, request):
     """TC_WISHLIST_003: Удаление товара из списка желаний."""
     email, password, page = registered_page
 
@@ -300,7 +299,7 @@ def test_wishlist_remove_item(page, config, registered_page, wishlist_page, scre
             "The product has been added to your wishlist", timeout=7000)
 
         page.goto(config.get("DEFAULT", "base_url") + "/wishlist")
-        rows = page.locator("table.cart tbody tr.cart-item-row")
+        rows = page.locator(cart_page.cart_table_row)
         initial_rows = rows.count()
 
         assert initial_rows > 0, "В вишлисте нет товаров для удаления"
@@ -308,7 +307,7 @@ def test_wishlist_remove_item(page, config, registered_page, wishlist_page, scre
         wishlist_page.remove_from_wishlist()
         wishlist_page.update_wishlist()
 
-        expect(page.locator("table.cart tbody tr.cart-item-row")).to_have_count(initial_rows - 1, timeout=7000)
+        expect(page.locator(cart_page.cart_table_row)).to_have_count(initial_rows - 1, timeout=7000)
     except Exception as e:
         logger.error(f"Ошибка в процессе удаления товара из списка желаний: {e}")
         raise

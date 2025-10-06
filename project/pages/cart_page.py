@@ -13,7 +13,8 @@ class CartPage(BasePage):
         self.update_cart_button = "input[name='updatecart']"
         self.remove_checkbox = "input[name='removefromcart']"
         self.cart_content = "div.order-summary-content"
-        self.cart_table = "table.cart"
+        self.cart_table_row = "table.cart tbody tr.cart-item-row"
+        self.counter = ".header-links .cart-qty"
 
     def goto_checkout(self):
         """

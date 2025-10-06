@@ -8,7 +8,6 @@ from pages.register_page import RegisterPage
 from pages.change_password_page import ChangePasswordPage
 from utils.helper import generate_random_string
 from playwright.sync_api import Page, expect
-from configparser import ConfigParser
 from data.user import user_data
 from utils.logger import logger
 from data.address import new_address  
@@ -80,8 +79,8 @@ def filled_address_form(page, config, registered_page, my_account_page, addresse
         )
         add_address_page.save_address()
 
-        expect(page.locator("div.address-list")).to_be_visible(timeout=5000)  
-        expect(page.locator("div.address-list")).to_contain_text(first_name,
+        expect(page.locator(my_account_page.addresses_list)).to_be_visible(timeout=5000)  
+        expect(page.locator(my_account_page.addresses_list)).to_contain_text(first_name,
                                                                   timeout=5000) 
 
         return page, email
